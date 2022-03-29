@@ -13,19 +13,10 @@
 
 #include "../input_manager/manager.h"
 #include "func.h"
-#include "linked_list.h"
 
 int main(int argc, char const *argv[])
 {
 
-  
-  // pid_t arreglo_de_procesos[255];
-  // time_t arreglo_de_tiempos[255];
-  // for (int i = 0; i < 255; i++) 
-  // {
-  //   arreglo_de_procesos[i] = 0;
-  //   arreglo_de_tiempos[i] = 0;
-  // }
   pid_t* process_array = calloc(255, sizeof(pid_t));
   time_t* time_array = calloc(255, sizeof(time_t));
   int** status_array = malloc(255 * sizeof(int*));
@@ -38,6 +29,7 @@ int main(int argc, char const *argv[])
     // printf("> The first argument you wrote was: %s\n", input[0]);
     pid_t pid_child;
     int* status = malloc(sizeof(int));
+    // int status;
     
     
     if (strcmp(input[0], "hello") == 0)
@@ -49,14 +41,15 @@ int main(int argc, char const *argv[])
         // funcion del proceso hijo
         printf("> Hello World!\n");
         // recordar terminarlo para que no siga en el while
-        int my_id = getpid();
-        exit(my_id);
+        pid_t my_id = getpid();
+        exit(0);
       }
       waitpid(pid_child, status, WNOHANG);
       process_array[process_counter] = pid_child;
       time_array[process_counter] = time(NULL);
       status_array[process_counter] = status;
       process_counter++;
+      // printf("hello status: %d\n", status);
     }
 
     else if (strcmp(input[0], "sum") == 0)
@@ -71,14 +64,15 @@ int main(int argc, char const *argv[])
         double y = atof(input[2]);
         printf("> %f\n", x+y);
         // recordar terminarlo para que no siga en el while
-        int my_id = getpid();
-        exit(my_id);
+        pid_t my_id = getpid();
+        exit(0);
       }
       waitpid(pid_child, status, WNOHANG);
       process_array[process_counter] = pid_child;
       time_array[process_counter] = time(NULL);
       status_array[process_counter] = status;
       process_counter++;
+      // printf("sum status: %d\n", status);
     
     }
 
@@ -86,35 +80,44 @@ int main(int argc, char const *argv[])
     {
       // implementar funcion is_prime
       // hacer algo con el caso en que input[1] sea 0 o negativo
-      int x = atoi(input[1]);
-      if (x <= 0)
+      if (input[1])
       {
-        printf("> input inválido\n");
-      }
-      else
-      {  
-        pid_t pid_child = fork();
-        if (pid_child == 0)
+        int x = atoi(input[1]);
+        if (x <= 0)
         {
-          // funcion del proceso hijo
-          if (1 == is_prime(x))
+          printf("> input inválido\n");
+        }
+        else
+        {  
+          pid_t pid_child = fork();
+          if (pid_child == 0)
           {
-            printf("> TRUE, %d es un número primo\n", x);
+            // funcion del proceso hijo
+            if (1 == is_prime(x))
+            {
+              printf("> TRUE, %d es un número primo\n", x);
+            }
+            else
+            {
+              printf("> FALSE, %d no es un número primo\n", x);
+            }
+            // recordar terminarlo para que no siga en el while
+            pid_t my_id = getpid();
+            exit(0);
           }
-          else
-          {
-            printf("> FALSE, %d no es un número primo\n", x);
-          }
-          // recordar terminarlo para que no siga en el while
-          int my_id = getpid();
-          exit(my_id);
+          waitpid(pid_child, status, WNOHANG);
+          process_array[process_counter] = pid_child;
+          time_array[process_counter] = time(NULL);
+          status_array[process_counter] = status;
+          process_counter++;
+          // printf("is_prime status: %d\n", status);
         }
       }
-      waitpid(pid_child, status, WNOHANG);
-      process_array[process_counter] = pid_child;
-      time_array[process_counter] = time(NULL);
-      status_array[process_counter] = status;
-      process_counter++;
+      else
+      {
+        printf("Error: is_prime must receive an argument\n");
+      }
+      
       
       
     }
@@ -139,6 +142,7 @@ int main(int argc, char const *argv[])
       time_array[process_counter] = time(NULL);
       status_array[process_counter] = status;
       process_counter++;
+      // printf("crexec status: %d\n", status);
     }
 
     else if (strcmp(input[0], "crlist") == 0)
@@ -147,13 +151,25 @@ int main(int argc, char const *argv[])
       for (int i = 0; i < process_counter; i++)
       {
         // int* status = malloc(sizeof(int));
-        // waitpid(process_array[i], status, WNOHANG);
         time_t time_passed = time(NULL) - time_array[i];
+        int* st = status_array[i];
         // int exited = WIFEXITED(status_array[i]);
+        // waitpid(process_array[i], status, WNOHANG);
+        printf("process ID: %i | running time: %ld s | status: %d",
+        process_array[i], time_passed, *st);
+        if (WIFEXITED(*st))
+        {
+          printf(" WEXITSTATUS %d\n", WEXITSTATUS(*st));
+        }
+        else
+        {
+          printf("\n");
+        }
+        // free(status);
         
-        printf("process ID: %i | running time: %ld s | status: %d", 
-        process_array[i], time_passed, *status);
-        printf("%i\n", WIFEXITED(*status));
+        
+        
+        
         // printf("%d\n", WIFEXITED(status_array[i]));
         // free(status);
         
@@ -165,12 +181,13 @@ int main(int argc, char const *argv[])
     else if (strcmp(input[0], "crexit") == 0)
     {
       // implementar funcion crexit
-      pid_t pid_child = fork();
-      if (pid_child == 0)
-      {
-        // funcion del proceso hijo
-        // recordar terminarlo para que no siga en el while
-      }
+      // pid_t pid_child = fork();
+      // if (pid_child == 0)
+      // {
+      //   // funcion del proceso hijo
+      //   // recordar terminarlo para que no siga en el while
+      // }
+      break;
 
     }
 
@@ -180,6 +197,7 @@ int main(int argc, char const *argv[])
       printf("> comando '%s' desconocido\n", input[0]);
     }
     free_user_input(input);
+    // free(status);
   }
   free(time_array);
   free(process_array);
