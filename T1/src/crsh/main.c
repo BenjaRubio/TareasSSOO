@@ -13,7 +13,7 @@
 
 #include "../input_manager/manager.h"
 #include "func.h"
-#include "linked_list.h"
+// #include "linked_list.h"
 
 int main(int argc, char const *argv[])
 {
@@ -150,10 +150,13 @@ int main(int argc, char const *argv[])
         // waitpid(process_array[i], status, WNOHANG);
         time_t time_passed = time(NULL) - time_array[i];
         // int exited = WIFEXITED(status_array[i]);
-        
-        printf("process ID: %i | running time: %ld s | status: %d", 
-        process_array[i], time_passed, *status);
-        printf("%i\n", WIFEXITED(*status));
+        pid_t estado = waitpid(process_array[i], status, WNOHANG);
+        if (estado == 0)
+        {
+          printf("process ID: %i | running time: %ld s | status: %d", 
+          process_array[i], time_passed, *status);
+          printf("%i\n", WIFEXITED(*status));
+        }
         // printf("%d\n", WIFEXITED(status_array[i]));
         // free(status);
         
