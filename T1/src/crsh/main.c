@@ -81,27 +81,43 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "sum") == 0)
     {
-      // implementar funcion sum
-      pid_t pid_child = fork();
-      if (pid_child == 0)
+
+      if (!input[1] || !input[2] || input[3])
       {
-        // funcion del proceso hijo
-        // se deben tomar el input[1] e input [2] y pasarse a double
+        printf("Error: sum must receive 2 arguments\n");
+      }
+      else
+      {
         double x = atof(input[1]);
         double y = atof(input[2]);
-        printf("> %f\n", x+y);
-        // recordar terminarlo para que no siga en el while
-        int my_id = getpid();
-        exit(my_id);
-      }
-      for (int i = 0; i < 255; i++)
-      {
-        if (process_array[i] == -1)
+        if ((strcmp(input[1], "0") && x == 0) || (strcmp(input[2], "0") && y == 0))
         {
-          process_array[i] = pid_child;
-          time_array[i] = time(NULL);
-          names_array[i] = "sum";
-          break;
+          printf("Error: sum must receive floating point numbers\n");
+        }
+        else
+        {
+          pid_t pid_child = fork();
+          if (pid_child == 0)
+          {
+            // funcion del proceso hijo
+            // se deben tomar el input[1] e input [2] y pasarse a double
+            
+            printf("> %f\n", x+y);
+            // recordar terminarlo para que no siga en el while
+            int my_id = getpid();
+            exit(my_id);
+          }
+          for (int i = 0; i < 255; i++)
+          {
+            if (process_array[i] == -1)
+            {
+              process_array[i] = pid_child;
+              time_array[i] = time(NULL);
+              names_array[i] = "sum";
+              break;
+            }
+          }
+          
         }
       }
     
@@ -111,43 +127,50 @@ int main(int argc, char const *argv[])
     {
       // implementar funcion is_prime
       // hacer algo con el caso en que input[1] sea 0 o negativo
-      int x = atoi(input[1]);
-      if (x <= 0)
+      if (input[1])
       {
-        printf("> input inválido\n");
+        int x = atoi(input[1]);
+        if (x <= 0)
+        {
+          printf("> input inválido\n");
+        }
+        else
+        {  
+          pid_t pid_child = fork();
+          if (pid_child == 0)
+          {
+            // funcion del proceso hijo
+            if (1 == is_prime(x))
+            {
+              printf("> TRUE, %d es un número primo\n", x);
+            }
+            else
+            {
+              printf("> FALSE, %d no es un número primo\n", x);
+            }
+            // recordar terminarlo para que no siga en el while
+            int my_id = getpid();
+            exit(my_id);
+          }
+          for (int i = 0; i < 255; i++)
+          {
+            if (process_array[i] == -1)
+            {
+              process_array[i] = pid_child;
+              time_array[i] = time(NULL);
+              names_array[i] = "is_prime";
+              break;
+            }
+          }
+  
+        }
       }
       else
-      {  
-        pid_t pid_child = fork();
-        if (pid_child == 0)
-        {
-          // funcion del proceso hijo
-          if (1 == is_prime(x))
-          {
-            printf("> TRUE, %d es un número primo\n", x);
-          }
-          else
-          {
-            printf("> FALSE, %d no es un número primo\n", x);
-          }
-          // recordar terminarlo para que no siga en el while
-          int my_id = getpid();
-          exit(my_id);
-        }
-      }
-      for (int i = 0; i < 255; i++)
       {
-        if (process_array[i] == -1)
-        {
-          process_array[i] = pid_child;
-          time_array[i] = time(NULL);
-          names_array[i] = "is_prime";
-          break;
-        }
+        printf("Error: is_prime must receive an argument\n");
       }
       
-      
-      
+   
     }
 
     else if (strcmp(input[0], "crexec") == 0)
@@ -156,10 +179,6 @@ int main(int argc, char const *argv[])
       pid_t pid_child = fork();
       if (pid_child == 0)
       {
-        // funcion del proceso hijo
-        // recordar terminarlo para que no siga en el while
-        // debe ser terminado dentro de la funcion que ejecuta el exec
-        // porque reemplazara lo que venga despues
         execv(input[1], &input[1]);
         perror("> crexec");
         // si hay error hay que terminar el proceso
@@ -203,15 +222,8 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "crexit") == 0)
     {
+      free_user_input(input);
       break;
-      // implementar funcion crexit
-      pid_t pid_child = fork();
-      if (pid_child == 0)
-      {
-        // funcion del proceso hijo
-        // recordar terminarlo para que no siga en el while
-      }
-
     }
 
     else
@@ -219,6 +231,7 @@ int main(int argc, char const *argv[])
       // implementar que lance una excepcion por comando invalido
       printf("> comando '%s' desconocido\n", input[0]);
     }
+
   }
   
 }
