@@ -17,28 +17,37 @@
 
 int main(int argc, char const *argv[])
 {
+  int status;
+  pid_t pid_child;
 
-  
-  // pid_t arreglo_de_procesos[255];
-  // time_t arreglo_de_tiempos[255];
-  // for (int i = 0; i < 255; i++) 
-  // {
-  //   arreglo_de_procesos[i] = 0;
-  //   arreglo_de_tiempos[i] = 0;
-  // }
-  pid_t* process_array = calloc(255, sizeof(pid_t));
-  time_t* time_array = calloc(255, sizeof(time_t));
-  int** status_array = malloc(255 * sizeof(int*));
-  int process_counter = 0;
+  pid_t process_array[255];
+  time_t time_array[255];
+  // int status_array[255];
+  char* names_array[255];
+  for (int i = 0; i < 255; i++) 
+  {
+    process_array[i] = -1;
+    time_array[i] = 0;
+    // status_array[i] = -1;
+    names_array[i] = "unrecognized";
+  }
   
   while (1)
   {
-
+    // Revisamos todos los procesos y liberamos los que terminaron:
+    for (int i=0; i < 255; i++)
+    {
+      pid_t stopped_running = waitpid(process_array[i], &status, WNOHANG);
+      // pid_t stopped_running = 1;
+      if (stopped_running)
+      {
+        // con p_a = -1, permite sobreescribirlo
+        process_array[i] = -1;
+      }
+    }
+    printf("> ");
     char **input = read_user_input();
     // printf("> The first argument you wrote was: %s\n", input[0]);
-    pid_t pid_child;
-    int* status = malloc(sizeof(int));
-    
     
     if (strcmp(input[0], "hello") == 0)
     {
@@ -52,11 +61,22 @@ int main(int argc, char const *argv[])
         int my_id = getpid();
         exit(my_id);
       }
-      waitpid(pid_child, status, WNOHANG);
-      process_array[process_counter] = pid_child;
-      time_array[process_counter] = time(NULL);
-      status_array[process_counter] = status;
-      process_counter++;
+      // waitpid(pid_child, status, WNOHANG);
+      // process_array[process_counter] = pid_child;
+      // time_array[process_counter] = time(NULL);
+      // status_array[process_counter] = status;
+      // process_counter++;
+      // buscamos un lugar donde guardarlo
+      for (int i = 0; i < 255; i++)
+      {
+        if (process_array[i] == -1)
+        {
+          process_array[i] = pid_child;
+          time_array[i] = time(NULL);
+          names_array[i] = "hello";
+          break;
+        }
+      }
     }
 
     else if (strcmp(input[0], "sum") == 0)
@@ -87,11 +107,17 @@ int main(int argc, char const *argv[])
             int my_id = getpid();
             exit(my_id);
           }
-          waitpid(pid_child, status, WNOHANG);
-          process_array[process_counter] = pid_child;
-          time_array[process_counter] = time(NULL);
-          status_array[process_counter] = status;
-          process_counter++;
+          for (int i = 0; i < 255; i++)
+          {
+            if (process_array[i] == -1)
+            {
+              process_array[i] = pid_child;
+              time_array[i] = time(NULL);
+              names_array[i] = "sum";
+              break;
+            }
+          }
+          
         }
       }
     
@@ -126,17 +152,25 @@ int main(int argc, char const *argv[])
             int my_id = getpid();
             exit(my_id);
           }
-          waitpid(pid_child, status, WNOHANG);
-          process_array[process_counter] = pid_child;
-          time_array[process_counter] = time(NULL);
-          status_array[process_counter] = status;
-          process_counter++;
+          for (int i = 0; i < 255; i++)
+          {
+            if (process_array[i] == -1)
+            {
+              process_array[i] = pid_child;
+              time_array[i] = time(NULL);
+              names_array[i] = "is_prime";
+              break;
+            }
+          }
+  
         }
       }
       else
       {
         printf("Error: is_prime must receive an argument\n");
       }
+      
+   
     }
 
     else if (strcmp(input[0], "crexec") == 0)
@@ -145,38 +179,39 @@ int main(int argc, char const *argv[])
       pid_t pid_child = fork();
       if (pid_child == 0)
       {
-        // funcion del proceso hijo
-        // recordar terminarlo para que no siga en el while
-        // debe ser terminado dentro de la funcion que ejecuta el exec
-        // porque reemplazara lo que venga despues
         execv(input[1], &input[1]);
         perror("> crexec");
         // si hay error hay que terminar el proceso
         exit(0);
       }
-      waitpid(pid_child, status, WNOHANG);
-      process_array[process_counter] = pid_child;
-      time_array[process_counter] = time(NULL);
-      status_array[process_counter] = status;
-      process_counter++;
+      for (int i = 0; i < 255; i++)
+      {
+        if (process_array[i] == -1)
+        {
+          process_array[i] = pid_child;
+          time_array[i] = time(NULL);
+          names_array[i] = input[1];
+          break;
+        }
+      }
     }
 
     else if (strcmp(input[0], "crlist") == 0)
     {
       // implementar funcion crlist
-      for (int i = 0; i < process_counter; i++)
+      for (int i = 0; i < 255; i++)
       {
-        // int* status = malloc(sizeof(int));
-        // waitpid(process_array[i], status, WNOHANG);
-        time_t time_passed = time(NULL) - time_array[i];
-        // int exited = WIFEXITED(status_array[i]);
-        pid_t estado = waitpid(process_array[i], status, WNOHANG);
-        if (estado == 0)
+        if (process_array[i] != -1)
         {
-          printf("process ID: %i | running time: %ld s | status: %d", 
-          process_array[i], time_passed, *status);
-          printf("%i\n", WIFEXITED(*status));
-        }
+          time_t time_passed = time(NULL) - time_array[i];
+          pid_t stopped_running = waitpid(process_array[i], &status, WNOHANG);
+          if (stopped_running == 0)
+          {
+            printf("name: %s | process ID: %i | running time: %ld s | status: %d", 
+            names_array[i], process_array[i], time_passed, status);
+            printf("%i\n", WIFEXITED(status));
+          }      
+      }
         // printf("%d\n", WIFEXITED(status_array[i]));
         // free(status);
         
@@ -196,14 +231,7 @@ int main(int argc, char const *argv[])
       // implementar que lance una excepcion por comando invalido
       printf("> comando '%s' desconocido\n", input[0]);
     }
-    free_user_input(input);
-  }
-  free(time_array);
-  free(process_array);
-  for (int i = 0; i < process_counter; i++)
-  {
-    free(status_array[i]);
-  }
-  free(status_array);
-}
 
+  }
+  
+}
