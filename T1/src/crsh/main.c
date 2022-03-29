@@ -61,24 +61,39 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "sum") == 0)
     {
-      // implementar funcion sum
-      pid_t pid_child = fork();
-      if (pid_child == 0)
+
+      if (!input[1] || !input[2] || input[3])
       {
-        // funcion del proceso hijo
-        // se deben tomar el input[1] e input [2] y pasarse a double
+        printf("Error: sum must receive 2 arguments\n");
+      }
+      else
+      {
         double x = atof(input[1]);
         double y = atof(input[2]);
-        printf("> %f\n", x+y);
-        // recordar terminarlo para que no siga en el while
-        int my_id = getpid();
-        exit(my_id);
+        if ((strcmp(input[1], "0") && x == 0) || (strcmp(input[2], "0") && y == 0))
+        {
+          printf("Error: sum must receive floating point numbers\n");
+        }
+        else
+        {
+          pid_t pid_child = fork();
+          if (pid_child == 0)
+          {
+            // funcion del proceso hijo
+            // se deben tomar el input[1] e input [2] y pasarse a double
+            
+            printf("> %f\n", x+y);
+            // recordar terminarlo para que no siga en el while
+            int my_id = getpid();
+            exit(my_id);
+          }
+          waitpid(pid_child, status, WNOHANG);
+          process_array[process_counter] = pid_child;
+          time_array[process_counter] = time(NULL);
+          status_array[process_counter] = status;
+          process_counter++;
+        }
       }
-      waitpid(pid_child, status, WNOHANG);
-      process_array[process_counter] = pid_child;
-      time_array[process_counter] = time(NULL);
-      status_array[process_counter] = status;
-      process_counter++;
     
     }
 
@@ -111,12 +126,12 @@ int main(int argc, char const *argv[])
             int my_id = getpid();
             exit(my_id);
           }
+          waitpid(pid_child, status, WNOHANG);
+          process_array[process_counter] = pid_child;
+          time_array[process_counter] = time(NULL);
+          status_array[process_counter] = status;
+          process_counter++;
         }
-        waitpid(pid_child, status, WNOHANG);
-        process_array[process_counter] = pid_child;
-        time_array[process_counter] = time(NULL);
-        status_array[process_counter] = status;
-        process_counter++;
       }
       else
       {
@@ -172,6 +187,7 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "crexit") == 0)
     {
+      free_user_input(input);
       break;
     }
 
@@ -184,7 +200,8 @@ int main(int argc, char const *argv[])
   }
   free(time_array);
   free(process_array);
-  for (int i = 0; i < process_counter; i++){
+  for (int i = 0; i < process_counter; i++)
+  {
     free(status_array[i]);
   }
   free(status_array);

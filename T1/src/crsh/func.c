@@ -6,6 +6,10 @@
 int is_prime(int n){
     // return 1 si n es primo
     // return 0 si no
+    if (n == 1)
+    {
+        return 0;
+    }
     div_t result;
     for (int i = 2; i < n; i++)
     {
