@@ -86,37 +86,42 @@ int main(int argc, char const *argv[])
     {
       // implementar funcion is_prime
       // hacer algo con el caso en que input[1] sea 0 o negativo
-      int x = atoi(input[1]);
-      if (x <= 0)
+      if (input[1])
       {
-        printf("> input inválido\n");
+        int x = atoi(input[1]);
+        if (x <= 0)
+        {
+          printf("> input inválido\n");
+        }
+        else
+        {  
+          pid_t pid_child = fork();
+          if (pid_child == 0)
+          {
+            // funcion del proceso hijo
+            if (1 == is_prime(x))
+            {
+              printf("> TRUE, %d es un número primo\n", x);
+            }
+            else
+            {
+              printf("> FALSE, %d no es un número primo\n", x);
+            }
+            // recordar terminarlo para que no siga en el while
+            int my_id = getpid();
+            exit(my_id);
+          }
+        }
+        waitpid(pid_child, status, WNOHANG);
+        process_array[process_counter] = pid_child;
+        time_array[process_counter] = time(NULL);
+        status_array[process_counter] = status;
+        process_counter++;
       }
       else
-      {  
-        pid_t pid_child = fork();
-        if (pid_child == 0)
-        {
-          // funcion del proceso hijo
-          if (1 == is_prime(x))
-          {
-            printf("> TRUE, %d es un número primo\n", x);
-          }
-          else
-          {
-            printf("> FALSE, %d no es un número primo\n", x);
-          }
-          // recordar terminarlo para que no siga en el while
-          int my_id = getpid();
-          exit(my_id);
-        }
+      {
+        printf("Error: is_prime must receive an argument\n");
       }
-      waitpid(pid_child, status, WNOHANG);
-      process_array[process_counter] = pid_child;
-      time_array[process_counter] = time(NULL);
-      status_array[process_counter] = status;
-      process_counter++;
-      
-      
     }
 
     else if (strcmp(input[0], "crexec") == 0)
@@ -167,14 +172,7 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "crexit") == 0)
     {
-      // implementar funcion crexit
-      pid_t pid_child = fork();
-      if (pid_child == 0)
-      {
-        // funcion del proceso hijo
-        // recordar terminarlo para que no siga en el while
-      }
-
+      break;
     }
 
     else
