@@ -22,13 +22,11 @@ int main(int argc, char const *argv[])
 
   pid_t process_array[255];
   time_t time_array[255];
-  // int status_array[255];
   char* names_array[255];
   for (int i = 0; i < 255; i++) 
   {
     process_array[i] = -1;
     time_array[i] = 0;
-    // status_array[i] = -1;
     names_array[i] = "unrecognized";
   }
   
@@ -38,7 +36,6 @@ int main(int argc, char const *argv[])
     for (int i=0; i < 255; i++)
     {
       pid_t stopped_running = waitpid(process_array[i], &status, WNOHANG);
-      // pid_t stopped_running = 1;
       if (stopped_running)
       {
         // con p_a = -1, permite sobreescribirlo
@@ -47,25 +44,18 @@ int main(int argc, char const *argv[])
     }
     printf("> ");
     char **input = read_user_input();
-    // printf("> The first argument you wrote was: %s\n", input[0]);
+
     
     if (strcmp(input[0], "hello") == 0)
     {
-      // implementar funcion hello world
       pid_t pid_child = fork();
       if (pid_child == 0)
       {
         // funcion del proceso hijo
         printf("> Hello World!\n");
-        // recordar terminarlo para que no siga en el while
         int my_id = getpid();
         exit(my_id);
       }
-      // waitpid(pid_child, status, WNOHANG);
-      // process_array[process_counter] = pid_child;
-      // time_array[process_counter] = time(NULL);
-      // status_array[process_counter] = status;
-      // process_counter++;
       // buscamos un lugar donde guardarlo
       for (int i = 0; i < 255; i++)
       {
@@ -98,12 +88,8 @@ int main(int argc, char const *argv[])
         {
           pid_t pid_child = fork();
           if (pid_child == 0)
-          {
-            // funcion del proceso hijo
-            // se deben tomar el input[1] e input [2] y pasarse a double
-            
+          {            
             printf("> %f\n", x+y);
-            // recordar terminarlo para que no siga en el while
             int my_id = getpid();
             exit(my_id);
           }
@@ -125,9 +111,8 @@ int main(int argc, char const *argv[])
 
     else if (strcmp(input[0], "is_prime") == 0)
     {
-      // implementar funcion is_prime
-      // hacer algo con el caso en que input[1] sea 0 o negativo
-      if (input[1])
+  
+      if (input[1] && !input[2])
       {
         int x = atoi(input[1]);
         if (x <= 0)
@@ -162,15 +147,12 @@ int main(int argc, char const *argv[])
               break;
             }
           }
-  
         }
       }
       else
       {
-        printf("Error: is_prime must receive an argument\n");
+        printf("Error: is_prime must receive one argument\n");
       }
-      
-   
     }
 
     else if (strcmp(input[0], "crexec") == 0)
@@ -184,6 +166,7 @@ int main(int argc, char const *argv[])
         // si hay error hay que terminar el proceso
         exit(0);
       }
+      
       for (int i = 0; i < 255; i++)
       {
         if (process_array[i] == -1)
@@ -194,6 +177,7 @@ int main(int argc, char const *argv[])
           break;
         }
       }
+      
     }
 
     else if (strcmp(input[0], "crlist") == 0)
@@ -211,13 +195,8 @@ int main(int argc, char const *argv[])
             names_array[i], process_array[i], time_passed, status);
             printf("%i\n", WIFEXITED(status));
           }      
+        }
       }
-        // printf("%d\n", WIFEXITED(status_array[i]));
-        // free(status);
-        
-
-      }
-      
     }
 
     else if (strcmp(input[0], "crexit") == 0)
@@ -233,5 +212,6 @@ int main(int argc, char const *argv[])
     }
 
   }
+ 
   
 }
