@@ -17,25 +17,34 @@ int main(int argc, char const *argv[])
 	printf("Procesos:\n");
 
 	Queue* queue1 = malloc(sizeof(Queue));
-	*queue1 = (Queue){.process = malloc(input_file->len * sizeof(Process)), .priority = 2,
-	 .quantum = 2*q, .len = 0};
+	*queue1 = init_queue(input_file->len, 2, q);
+
 	Queue* queue2 = malloc(sizeof(Queue));
-	*queue2 = (Queue){.process = malloc(input_file->len * sizeof(Process)), .priority = 1,
-	 .quantum = q, .len = 0};
+	*queue2 = init_queue(input_file->len, 1, q);
+
 	Queue* queue3 = malloc(sizeof(Queue));
-	*queue3 = (Queue){.process = malloc(input_file->len * sizeof(Process)), .priority = 0,
-	 .quantum = 0, .len = 0};
+	*queue3 = init_queue(input_file->len, 0, q);
 
+	Queue* processes = malloc(sizeof(Queue));
+	*processes = init_queue(input_file->len, 0, q);
 
-
+	//se crean procesos y agregan a la cola de todos los procesos
 	for (int i = 0; i < input_file->len; ++i)
 	{
-		for (int j = 0; j < 7; ++j)
-		{
-			printf("%s ", input_file->lines[i][j]);
-		}
-		printf("\n");
+		
+		char* name = (char *) input_file->lines[i][0];
+		int pid = (int) input_file->lines[i][1];
+		int initial_time = (int) input_file->lines[i][2];
+		int cycles = (int) input_file->lines[i][3];
+		int wait = (int) input_file->lines[i][4];
+		int waiting_delay = (int) input_file->lines[i][5];
+		int s = (int) input_file->lines[i][6];
+		Process p = init_process(name, pid, initial_time, cycles, wait, waiting_delay, s);
+		processes->process[i] = p;
+		processes->len += 1;
 	}
+
+
 
 	input_file_destroy(input_file);
 

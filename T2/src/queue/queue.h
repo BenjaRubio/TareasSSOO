@@ -8,6 +8,8 @@ typedef struct queue {
     int len;
 } Queue;
 
-Process less_burst_process(Queue* queue, int cycle);
+
+Queue init_queue(int max_len, int priority, int q);
 void enqueue(Queue* queue, Process process);
-Process dequeue(Queue* queue);
+Process fifo_dequeue(Queue* queue);
+Process sjf_dequeue(Queue* queue);
