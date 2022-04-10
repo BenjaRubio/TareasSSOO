@@ -8,7 +8,6 @@ int main(int argc, char const *argv[])
 {
 	// Cola de procesos:
 	Queue* process_list = calloc(1, sizeof(Queue));
-	Process* cpu = 0;
 
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
@@ -51,8 +50,18 @@ int main(int argc, char const *argv[])
 		printf("\n");
 	}
 
+	int q_factor = atoi(argv[3]);
+	Process* cpu = calloc(1, sizeof(Process*));
+	Queue* queue1 = calloc(1, sizeof(Queue));
+	Queue* queue2 = calloc(1, sizeof(Queue));
+	Queue* queue3 = calloc(1, sizeof(Queue));
+	queue1->quantum = q_factor * 2;
+	queue1->quantum = q_factor;
+
+
 	print_queue(process_list);
 	destroy_queue(process_list);
+	free(cpu)
 	
 	input_file_destroy(input_file);
 
