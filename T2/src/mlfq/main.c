@@ -58,11 +58,24 @@ int main(int argc, char const *argv[])
 	queue1->quantum = q_factor * 2;
 	queue1->quantum = q_factor;
 
+	print_queue(process_list, "process list");
+	print_queue(queue1, "queue1");
 
 
-	print_queue(process_list);
+	while (process_list->first) {
+		Process* current = dequeue(process_list);
+		enqueue(current, queue1);
+		current = current->queue_next;
+	}
+
+	print_queue(process_list, "process list");
+	print_queue(queue1, "queue1");
+
 	destroy_queue(process_list);
-	free(cpu)
+	destroy_queue(queue1);
+	destroy_queue(queue2);
+	destroy_queue(queue3);
+	free(cpu);
 	
 	input_file_destroy(input_file);
 

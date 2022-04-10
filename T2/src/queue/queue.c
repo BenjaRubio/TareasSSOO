@@ -3,12 +3,18 @@
 #include <stdio.h>
 
 void enqueue(Process* process, Queue* queue) {
-    process->queue_next = queue->first;
-    queue->first->queue_prev = process;
-    queue->first = process;
+    if (queue->last) {
+        process->queue_prev = queue->last;
+        queue->last->queue_next = process;
+        queue->last = process;
+    }
+    else {
+        queue->first = process;
+        queue->last = process;
+    }
 }
 
-Process* dequeue(Process* process, Queue* queue) {
+Process* dequeue(Queue* queue) {
     Process* exiting = queue->first;
     if (exiting->queue_next) { // if more left in queue:
         queue->first = exiting->queue_next;
@@ -33,8 +39,8 @@ void destroy_queue(Queue* queue) {
     free(queue);
 }
 
-void print_queue(Queue* queue) {
-    printf("Queue elements in order:\n");
+void print_queue(Queue* queue, char* name) {
+    printf("\n%s elements in order:\n", name);
     Process* current = queue->first;
     Process* following;
     while (current) {

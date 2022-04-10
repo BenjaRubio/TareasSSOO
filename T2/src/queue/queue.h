@@ -10,12 +10,12 @@ typedef struct queue {
 // add process to queue
 void enqueue(Process* process, Queue* queue);
 // remove process from queue and return pointer
-Process* dequeue(Process* process, Queue* queue);
+Process* dequeue(Queue* queue);
 // pendiente: scan for old processes
 void scan(Queue* queue1, Queue* queue2, Queue* queue3);
 
 void destroy_queue(Queue* queue);
-void print_queue(Queue* queue);
+void print_queue(Queue* queue, char* name);
 
 // typedef struct queue {
 //     Process* process;
