@@ -59,6 +59,7 @@ int main(int argc, char const *argv[])
 	queue1->quantum = q_factor;
 
 
+
 	print_queue(process_list);
 	destroy_queue(process_list);
 	free(cpu)
