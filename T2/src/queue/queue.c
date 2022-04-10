@@ -2,6 +2,26 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+void enqueue(Process* process, Queue* queue) {
+    process->queue_next = queue->first;
+    queue->first->queue_prev = process;
+    queue->first = process;
+}
+
+Process* dequeue(Process* process, Queue* queue) {
+    Process* exiting = queue->first;
+    if (exiting->queue_next) { // if more left in queue:
+        queue->first = exiting->queue_next;
+        queue->first->queue_prev = 0;
+        exiting->queue_next = 0;
+    }
+    else { // queue left empty
+        queue->first = 0;
+        queue->last = 0;
+    }
+    return exiting;
+}
+
 void destroy_queue(Queue* queue) {
     Process* current = queue->first;
     Process* following;
