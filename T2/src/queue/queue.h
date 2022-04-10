@@ -1,15 +1,23 @@
 #pragma once
 #include "../process/process.h"
 
+// typedef struct queue {
+//     Process* process;
+//     int priority;
+//     int quantum;
+//     int len;
+// } Queue;
+
+
+// Queue init_queue(int max_len, int priority, int q);
+// void enqueue(Queue* queue, Process process);
+// Process fifo_dequeue(Queue* queue);
+// Process sjf_dequeue(Queue* queue);
+
 typedef struct queue {
-    Process* process;
-    int priority;
-    int quantum;
-    int len;
+    Process* first;
+    Process* last;
 } Queue;
 
-
-Queue init_queue(int max_len, int priority, int q);
-void enqueue(Queue* queue, Process process);
-Process fifo_dequeue(Queue* queue);
-Process sjf_dequeue(Queue* queue);
+void destroy_queue(Queue* queue);
+void print_queue(Queue* queue);
