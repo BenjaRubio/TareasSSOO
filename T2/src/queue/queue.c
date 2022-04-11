@@ -21,15 +21,15 @@ Process* brute_dequeue(Queue* queue) {
     Process* exiting = queue->first;
     if (exiting->queue_next) { // if more left in queue:
         queue->first = exiting->queue_next;
-        queue->first->queue_prev = 0;
-        exiting->queue_next = 0;
-        exiting->queue_prev = 0;
+        queue->first->queue_prev = NULL;
+        exiting->queue_next = NULL;
+        exiting->queue_prev = NULL;
     }
     else { // queue left empty
-        queue->first = 0;
-        queue->last = 0;
-        exiting->queue_next = 0;
-        exiting->queue_prev = 0;
+        queue->first = NULL;
+        queue->last = NULL;
+        exiting->queue_next = NULL;
+        exiting->queue_prev = NULL;
     }
     return exiting;
 }
@@ -186,14 +186,23 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         prev = current->queue_prev;
         if (time == current->initial_time)
         {
+            current->priority = 2; // (Felipe) asumo que siempre van a pasar a queue1
             enqueue(current, queue);
             if (next) 
             {
                 next->queue_prev = prev;
             }
+            else // si no hay next hay que actualizar last
+            {
+                process_list->last = prev   
+            }
             if (prev)
             {
                 prev->queue_next = next;
+            }
+            else // si no hay prev hay que actualizar first
+            {
+                process_list->first = next;
             }
 
         }
