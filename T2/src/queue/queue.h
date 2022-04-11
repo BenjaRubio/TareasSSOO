@@ -13,7 +13,7 @@ void enqueue(Process* process, Queue* queue);
 Process* fifo_dequeue(Queue* queue);
 Process* sjf_dequeue(Queue* queue);
 // pendiente: scan for old processes
-void scan(Queue* queue1, Queue* queue2, Queue* queue3);
+void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t);
 
 void destroy_queue(Queue* queue);
 void print_queue(Queue* queue, char* name);

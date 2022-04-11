@@ -7,10 +7,13 @@ void enqueue(Process* process, Queue* queue) {
         process->queue_prev = queue->last;
         queue->last->queue_next = process;
         queue->last = process;
+        process->queue_next = 0;
     }
     else {
         queue->first = process;
         queue->last = process;
+        process->queue_prev = 0;
+        process->queue_next = 0;
     }
 }
 
@@ -20,23 +23,30 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     {
         if (exiting->state == "READY")
         {
-            if (exiting->queue_next)
+            if (exiting->queue_next) // if more left in queue
             {
                 queue->first = exiting->queue_next;
                 queue->first->queue_prev = NULL;
                 exiting->queue_next = NULL;
+                exiting->queue_prev = NULL;
             }
-            else 
+            else // queue left empty
             {
                 queue->first = NULL;
                 queue->last = NULL;
+                exiting->queue_next = NULL;
+                exiting->queue_prev = NULL;
             }
             return exiting;
             
         }
-        if (exiting->queue_next)
+        else if (exiting->queue_next)
         {
             exiting = exiting->queue_next;
+        }
+        else
+        {
+            return NULL;
         }
     }
 }
@@ -59,13 +69,62 @@ Process* sjf_dequeue(Queue* queue)
 
 }
 
-void destroy_queue(Queue* queue) {
-    Process* current = queue->first;
+static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
+    // recorremos queuex
+    Process* scanned = queuex->first;
     Process* following;
-    while (current) {
-        following = current->queue_next;
-        free(current);
-        current = following;
+
+    while (scanned) {
+        following = scanned->queue_next;
+
+        if ( (current_t - scanned->initial_time) % scanned->s == 0 ) { // scanned se va
+            if (scanned->queue_prev && scanned->queue_next) { // si esta en medio
+                Process* prev = scanned->queue_prev;
+                Process* next = scanned->queue_next;
+                prev->queue_next = next;
+                next->queue_prev = prev;
+                scanned->queue_next = 0;
+                scanned->queue_prev = 0;
+            }
+            else if (scanned->queue_next) {// si es el primero
+                scanned = dequeue(queuex);
+            }
+            else if (scanned->queue_prev) { // si es el ultimo
+                queuex->last = scanned->queue_prev;
+                queuex->last->queue_next = 0;
+                scanned->queue_next = 0;
+                scanned->queue_prev = 0;
+            }
+            else { // si es el unico
+                queuex->first = 0;
+                queuex->last = 0;
+                scanned->queue_next = 0;
+                scanned->queue_prev = 0;
+            }
+            // ya lo sacamos, toca meterlo en queue1
+            enqueue(scanned, queue1);
+        }
+        scanned = following;
+    }
+
+}
+
+void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t) {
+    // scan queue3:
+    scan_one(queue1, queue3, current_t);
+    // scan queue2:
+    scan_one(queue1, queue2, current_t);
+}
+
+void destroy_queue(Queue* queue) {
+    if (queue->first) {
+        Process* current = queue->first;
+        Process* aux;
+        while (current) {
+            aux = current;
+            current = current->queue_next;
+            free(aux);
+        }
     }
     free(queue);
 }
