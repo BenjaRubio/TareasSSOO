@@ -209,3 +209,33 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         current = next;
     }
 }
+
+void write_to_file(const char* file, Queue* queue) {
+    FILE* file_pointer = fopen(file, "w");
+
+    if (queue->first) {
+        Process* current = queue->first;
+        Process* following;
+        while (current) {
+            following = current->queue_next;
+            char* string;
+            int n_chars;
+            // formatear la linea aqui:
+            n_chars = asprintf(&string, "%s,%i\n", current->name, current->pid);
+            
+            fwrite(string, 1, n_chars, file_pointer);
+
+            current = following;
+        }
+    }
+
+    // // Ejemplo:
+    // char* string;
+    // int n_chars;
+    // n_chars = asprintf(&string, "Formatting a number: %d\n", 42);
+    // for (int i=0; i < 4; i++){
+    //     fwrite(string, 1, n_chars, file_pointer);
+    // }
+
+    fclose(file_pointer);
+}

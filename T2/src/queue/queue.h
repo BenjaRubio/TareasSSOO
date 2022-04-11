@@ -21,6 +21,8 @@ void print_queue(Queue* queue, char* name);
 void actualize_state(Queue* queue);
 void enqueue_all(Queue* process_list, Queue* queue, int time);
 
+void write_to_file(const char* file, Queue* queue);
+
 // typedef struct queue {
 //     Process* process;
 //     int priority;
