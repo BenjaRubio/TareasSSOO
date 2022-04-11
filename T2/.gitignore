@@ -1,3 +1,5 @@
 mlfq
 obj/
 .vscode
+output.txt
+output.csv
