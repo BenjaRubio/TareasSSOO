@@ -8,6 +8,7 @@ int main(int argc, char const *argv[])
 {
 	// Cola de procesos:
 	Queue* process_list = calloc(1, sizeof(Queue));
+	*process_list = (Queue){.first = NULL, .last = NULL, .quantum = 0};
 
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
@@ -32,9 +33,10 @@ int main(int argc, char const *argv[])
 		Process* initialized = calloc(1, sizeof(Process));
 
 		// assign node attributes
-		*initialized = (Process) {.name = lines[i][0], .pid = atoi(lines[i][1]), .initial_time = atoi(lines[i][2]),
-		.cycles = atoi(lines[i][3]), .wait = atoi(lines[i][4]), .waiting_delay = atoi(lines[i][5]), 
-		.s = atoi(lines[i][6])};
+		*initialized = (Process) {.queue_next = NULL, .queue_prev = NULL, .name = lines[i][0], .pid = atoi(lines[i][1]),
+		 .initial_time = atoi(lines[i][2]), .cycles = atoi(lines[i][3]), .wait = atoi(lines[i][4]),
+		 .waiting_delay = atoi(lines[i][5]), .s = atoi(lines[i][6]), .t = 0, .state = "READY", .waiting_time = 0,
+		 .priority = 2};
 		
 		//  if list is empty, assign as first and last
 		if (!process_list->first) {
@@ -53,23 +55,69 @@ int main(int argc, char const *argv[])
 	int q_factor = atoi(argv[3]);
 	Process* cpu = calloc(1, sizeof(Process*));
 	Queue* queue1 = calloc(1, sizeof(Queue));
+	*queue1 = (Queue){.first = NULL, .last = NULL, .quantum = q_factor * 2};
 	Queue* queue2 = calloc(1, sizeof(Queue));
+	*queue2 = (Queue){.first = NULL, .last = NULL, .quantum = q_factor};
 	Queue* queue3 = calloc(1, sizeof(Queue));
-	queue1->quantum = q_factor * 2;
-	queue1->quantum = q_factor;
+	*queue3 = (Queue){.first = NULL, .last = NULL, .quantum = 0};
 
-	print_queue(process_list, "process list");
-	print_queue(queue1, "queue1");
+	int actual_time = 0;
+	int quantum_time = 0;
 
+	while (1)
+	{
+		// 1. Actualizar procesos que cumplan su I/O burst de WAITING a READY
+		actualize_state(queue1);
+		actualize_state(queue2);
+		actualize_state(queue3);
 
-	while (process_list->first) {
-		Process* current = dequeue(process_list);
-		enqueue(current, queue1);
-		current = current->queue_next;
+		// 2. Si hay proceso en RUNNING actualizar su estado
+		if (cpu)
+		{
+			int quantum = cpu->priority * q_factor;
+			div_t d = div(cpu->t, cpu->wait);
+			if (cpu->t == cpu->cycles)
+			{
+				// proceso termina
+			}
+			else if (d.rem == 0)
+			{
+				// proceso pasa a WAITING
+				// aumentar su prioridad
+			}
+			else if (quantum_time == quantum) // se acaba el quantum
+			{
+				// el if aun no esta bien hecho
+				// mover a la cola correspondiente
+				quantum_time = 0;
+				if (cpu->priority == 2)
+				{
+					// salio de la queue1 y se debe añadir a queue2
+				}
+				else if (cpu->priority == 1)
+				{
+					// salio de la queue2 y se debe añadir a queue3
+				}
+				else 
+				{
+					// salio de la queue 3 y debe volver a la queue3
+				}
+			}
+		}
+
+		// 3. Ingresar procesos a sus colas correspondientes
+		enqueue_all(process_list, queue1, actual_time);
+
+		// 4. Ingresar proceso a la CPU si corresponde
+
+		// chequear condicion de termino
+		actual_time++;
 	}
 
-	print_queue(process_list, "process list");
-	print_queue(queue1, "queue1");
+
+
+
+	
 
 	destroy_queue(process_list);
 	destroy_queue(queue1);

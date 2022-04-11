@@ -1,9 +1,10 @@
 #include "process.h"
 #include <stdio.h>
 
-void add_to_cpu(Process* process)
+void add_to_cpu(Process* process, Process* cpu)
 {
     process->state = "RUNNING";
+    *cpu = *process;
 }
 
 Process init_process(char* name, int pid, int initial_time, int cycles, 

@@ -14,18 +14,49 @@ void enqueue(Process* process, Queue* queue) {
     }
 }
 
-Process* dequeue(Queue* queue) {
+Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     Process* exiting = queue->first;
-    if (exiting->queue_next) { // if more left in queue:
-        queue->first = exiting->queue_next;
-        queue->first->queue_prev = 0;
-        exiting->queue_next = 0;
+    while (exiting)
+    {
+        if (exiting->state == "READY")
+        {
+            if (exiting->queue_next)
+            {
+                queue->first = exiting->queue_next;
+                queue->first->queue_prev = NULL;
+                exiting->queue_next = NULL;
+            }
+            else 
+            {
+                queue->first = NULL;
+                queue->last = NULL;
+            }
+            return exiting;
+            
+        }
+        if (exiting->queue_next)
+        {
+            exiting = exiting->queue_next;
+        }
     }
-    else { // queue left empty
-        queue->first = 0;
-        queue->last = 0;
+}
+
+Process* sjf_dequeue(Queue* queue)
+{
+    // retornar el proceso que le quede menos rafaga de CPU restante
+    // verificar que el proceso se encuentre en READY
+    Process* current = queue->first;
+    Process* exiting = queue->first;
+    while (current)
+    {
+        if (current->cycles - current->t < exiting->cycles - exiting->t && current->state == "READY")
+        {
+            exiting = current;
+        }
+        current = current->queue_next;
     }
     return exiting;
+
 }
 
 void destroy_queue(Queue* queue) {
@@ -53,60 +84,40 @@ void print_queue(Queue* queue, char* name) {
         current = following;
     }
 }
-// Queue init_queue(int max_len, int priority, int q)
-// {
-//     Queue queue = (Queue){.process = malloc(max_len * sizeof(Process)), .priority = priority,
-// 	 .quantum = priority*q, .len = 0};
-//     return queue;
-// }
 
+void actualize_state(Queue* queue)
+{
+    Process* p = queue->first;
+    while (p)
+    {
+        if (p->waiting_time == p->waiting_delay)
+        {
+            p->state = "READY";
+            p->waiting_time = 0;
+        }
+        p = p->queue_next;
+    }
+}
 
-// void enqueue(Queue* queue, Process process)
-// {
-//     // agrega el proceso al final de la cola
-//     int len = queue->len;
-//     queue->process[len] = process;
-//     queue->len += 1;
-// }
+void enqueue_all(Queue* process_list, Queue* queue, int time)
+{
+    Process* current = process_list->first;
+    Process* next;
+    Process* prev;
+    while (current)
+    {
+        next = current->queue_next;
+        prev = current->queue_prev;
+        if (time == current->initial_time)
+        {
+            enqueue(current, queue);
+            next->queue_prev = prev;
+            if (prev)
+            {
+                prev->queue_next = next;
+            }
 
-// Process fifo_dequeue(Queue* queue)
-// {
-//     // antes de usarse esta función se debe comprbar que hay elementos en la cola
-//     // entrega el primer proceso de la cola y mueve los restantes un lugar hacia adelante
-//     int len = queue->len;
-//     Process process = queue->process[0];
-//     for (int i = 1; i < len; i++)
-//     {
-//         queue->process[i-1] = queue->process[i];
-//     }
-//     queue->len -= 1;
-//     return process;
-    
-// }
-
-// Process sjf_dequeue(Queue* queue)
-// {
-//     Process p = queue->process[0];
-//     if (queue->len == 1)
-//     {
-//         queue->len -= 1;
-//         return p;
-//     }
-//     int index;
-//     // busca el proceso que le queda menos CPU-burst
-//     for (int i = 0; i < queue -> len; i++)
-//     {
-//         if (queue->process[i].t - queue->process[i].cycles < p.t - p.cycles)
-//         {
-//             p = queue->process[i];
-//             index = i;
-//         }
-//     }
-//     // mueve los procesos más atrás un espacio mas adelante en la cola
-//     for (int i = index + 1; i < queue->len; i++)
-//     {
-//         queue->process[i-1] = queue->process[i];
-//     }
-//     queue->len -= 1;
-//     return p;
-// }
+        }
+        current = next;
+    }
+}
