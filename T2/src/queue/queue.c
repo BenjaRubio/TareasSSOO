@@ -17,6 +17,23 @@ void enqueue(Process* process, Queue* queue) {
     }
 }
 
+Process* brute_dequeue(Queue* queue) {
+    Process* exiting = queue->first;
+    if (exiting->queue_next) { // if more left in queue:
+        queue->first = exiting->queue_next;
+        queue->first->queue_prev = 0;
+        exiting->queue_next = 0;
+        exiting->queue_prev = 0;
+    }
+    else { // queue left empty
+        queue->first = 0;
+        queue->last = 0;
+        exiting->queue_next = 0;
+        exiting->queue_prev = 0;
+    }
+    return exiting;
+}
+
 Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     Process* exiting = queue->first;
     while (exiting)
