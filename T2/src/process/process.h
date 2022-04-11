@@ -9,7 +9,8 @@ typedef struct process {
     int cycles;
     int wait;
     int waiting_delay;
-    int t; //tiempo de ejecución que lleva el proceso
+    int t; // tiempo de ejecución que lleva el proceso en total
+    int t_cpu; // tiempo que lleva en la cpu 
     char* state;
     int s;
     int waiting_time;

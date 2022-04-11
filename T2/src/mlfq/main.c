@@ -61,6 +61,9 @@ int main(int argc, char const *argv[])
 	Queue* queue3 = calloc(1, sizeof(Queue));
 	*queue3 = (Queue){.first = NULL, .last = NULL, .quantum = 0};
 
+	Queue* final_list = calloc(1, sizeof(Queue));
+	*final_list = (Queue){.first = NULL, .last = NULL, .quantum = -1};
+
 	int actual_time = 0;
 	int quantum_time = 0;
 	cpu = 0;
@@ -80,11 +83,24 @@ int main(int argc, char const *argv[])
 			if (cpu->t == cpu->cycles)
 			{
 				// proceso termina
+				enqueue(cpu, final_list); // lo guardamos para el output
+				cpu = 0;
 			}
 			else if (d.rem == 0)
 			{
 				// proceso pasa a WAITING
+				cpu->state = "WAITING";
 				// aumentar su prioridad
+				// enqueue_all: asignar priority
+				if (cpu->priority >= 1) 
+				{
+					// vuelve a queue1
+				}
+				else if (cpu->priority = 0)
+				{
+					// pasa a queue2
+				}
+
 			}
 			else if (quantum_time == quantum) // se acaba el quantum
 			{
@@ -116,6 +132,7 @@ int main(int argc, char const *argv[])
 		scan(queue1, queue2, queue3, actual_time);
 
 		// 4. Ingresar proceso a la CPU si corresponde
+		// (cambiar estado a running)
 
 		// chequear condicion de termino
 		actual_time++;

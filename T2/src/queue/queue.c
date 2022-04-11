@@ -7,13 +7,13 @@ void enqueue(Process* process, Queue* queue) {
         process->queue_prev = queue->last;
         queue->last->queue_next = process;
         queue->last = process;
-        process->queue_next = 0;
+        process->queue_next = NULL;
     }
     else {
         queue->first = process;
         queue->last = process;
-        process->queue_prev = 0;
-        process->queue_next = 0;
+        process->queue_prev = NULL;
+        process->queue_next = NULL;
     }
 }
 
@@ -187,7 +187,10 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         if (time == current->initial_time)
         {
             enqueue(current, queue);
-            next->queue_prev = prev;
+            if (next) 
+            {
+                next->queue_prev = prev;
+            }
             if (prev)
             {
                 prev->queue_next = next;
