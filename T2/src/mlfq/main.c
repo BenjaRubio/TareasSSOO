@@ -63,6 +63,7 @@ int main(int argc, char const *argv[])
 
 	int actual_time = 0;
 	int quantum_time = 0;
+	cpu = 0;
 
 	while (1)
 	{
@@ -106,7 +107,13 @@ int main(int argc, char const *argv[])
 		}
 
 		// 3. Ingresar procesos a sus colas correspondientes
+		
+		// 3.1 Si un proceso salio de la cpu (arriba)
+		// 3.2 Procesos que inician
 		enqueue_all(process_list, queue1, actual_time);
+
+		// 3.3 y 3.4 Envejecimiento 2da cola y 3ra cola:
+		scan(queue1, queue2, queue3, actual_time);
 
 		// 4. Ingresar proceso a la CPU si corresponde
 
