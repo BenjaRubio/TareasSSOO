@@ -104,7 +104,7 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
                 scanned->queue_prev = 0;
             }
             else if (scanned->queue_next) {// si es el primero
-                scanned = dequeue(queuex);
+                scanned = brute_dequeue(queuex);
             }
             else if (scanned->queue_prev) { // si es el ultimo
                 queuex->last = scanned->queue_prev;
@@ -128,9 +128,9 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
 
 void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t) {
     // scan queue3:
-    scan_one(queue1, queue3, current_t);
-    // scan queue2:
     scan_one(queue1, queue2, current_t);
+    // scan queue2:
+    scan_one(queue1, queue3, current_t);
 }
 
 void destroy_queue(Queue* queue) {
