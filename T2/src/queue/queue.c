@@ -211,7 +211,9 @@ void write_to_file(const char* file, Queue* queue) {
             following = current->queue_next;
             char* string;
             int n_chars;
+            // formatear la linea aqui:
             n_chars = asprintf(&string, "%s,%i\n", current->name, current->pid);
+            
             fwrite(string, 1, n_chars, file_pointer);
 
             current = following;
