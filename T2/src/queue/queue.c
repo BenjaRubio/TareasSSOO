@@ -30,15 +30,15 @@ Process* brute_dequeue(Queue* queue) {
     Process* exiting = queue->first;
     if (exiting->queue_next) { // if more left in queue:
         queue->first = exiting->queue_next;
-        queue->first->queue_prev = 0;
-        exiting->queue_next = 0;
-        exiting->queue_prev = 0;
+        queue->first->queue_prev = NULL;
+        exiting->queue_next = NULL;
+        exiting->queue_prev = NULL;
     }
     else { // queue left empty
-        queue->first = 0;
-        queue->last = 0;
-        exiting->queue_next = 0;
-        exiting->queue_prev = 0;
+        queue->first = NULL;
+        queue->last = NULL;
+        exiting->queue_next = NULL;
+        exiting->queue_prev = NULL;
     }
     return exiting;
 }
@@ -217,19 +217,30 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         prev = current->queue_prev;
         if (time == current->initial_time)
         {
+      
             enqueue(current, queue);
             if (next) 
             {
                 next->queue_prev = prev;
             }
+            else // si no hay next hay que actualizar last
+            {
+                process_list->last = prev   
+            }
             if (prev)
             {
                 prev->queue_next = next;
+            }
+
+            else // si no hay prev hay que actualizar first
+            {
+                process_list->first = next;
             }
         }
         current = next;
     }
 }
+
 
 void check_waiting(Queue* queue)
 {
@@ -242,4 +253,34 @@ void check_waiting(Queue* queue)
         }
         p = p->queue_next;
     }
+
+void write_to_file(const char* file, Queue* queue) {
+    FILE* file_pointer = fopen(file, "w");
+
+    if (queue->first) {
+        Process* current = queue->first;
+        Process* following;
+        while (current) {
+            following = current->queue_next;
+            char* string;
+            int n_chars;
+            // formatear la linea aqui:
+            n_chars = asprintf(&string, "%s,%i\n", current->name, current->pid);
+            
+            fwrite(string, 1, n_chars, file_pointer);
+
+            current = following;
+        }
+    }
+
+    // // Ejemplo:
+    // char* string;
+    // int n_chars;
+    // n_chars = asprintf(&string, "Formatting a number: %d\n", 42);
+    // for (int i=0; i < 4; i++){
+    //     fwrite(string, 1, n_chars, file_pointer);
+    // }
+
+    fclose(file_pointer);
+
 }
