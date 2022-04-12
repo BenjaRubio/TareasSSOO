@@ -5,8 +5,10 @@ typedef struct queue {
     Process* first;
     Process* last;
     int quantum;
+    int priority;
 } Queue;
 
+Queue init_queue(int q, int priority);
 // add process to queue
 void enqueue(Process* process, Queue* queue);
 // remove process from queue and return pointer
@@ -20,6 +22,7 @@ void print_queue(Queue* queue, char* name);
 
 void actualize_state(Queue* queue);
 void enqueue_all(Queue* process_list, Queue* queue, int time);
+void check_waiting(Queue* queue);
 
 void write_to_file(const char* file, Queue* queue);
 

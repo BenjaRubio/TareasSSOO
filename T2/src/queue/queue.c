@@ -1,6 +1,14 @@
 #include "queue.h"
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+
+
+Queue init_queue(int q, int priority)
+{
+    Queue queue = (Queue){.first = NULL, .last = NULL, .quantum = q * priority, .priority = priority};
+    return queue;
+}
 
 void enqueue(Process* process, Queue* queue) {
     if (queue->last) {
@@ -15,6 +23,7 @@ void enqueue(Process* process, Queue* queue) {
         process->queue_prev = NULL;
         process->queue_next = NULL;
     }
+    process->priority = queue->priority;
 }
 
 Process* brute_dequeue(Queue* queue) {
@@ -38,7 +47,7 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     Process* exiting = queue->first;
     while (exiting)
     {
-        if (exiting->state == "READY")
+        if (strcmp(exiting->state, "READY") == 0) // strings iguales
         {
             if (exiting->queue_next) // if more left in queue
             {
@@ -61,11 +70,8 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
         {
             exiting = exiting->queue_next;
         }
-        else
-        {
-            return NULL;
-        }
     }
+    return NULL;
 }
 
 Process* sjf_dequeue(Queue* queue)
@@ -76,14 +82,38 @@ Process* sjf_dequeue(Queue* queue)
     Process* exiting = queue->first;
     while (current)
     {
-        if (current->cycles - current->t < exiting->cycles - exiting->t && current->state == "READY")
+        if (current->cycles - current->t < exiting->cycles - exiting->t && strcmp(current->state, "READY") == 0)
         {
             exiting = current;
         }
         current = current->queue_next;
     }
-    return exiting;
-
+    if (strcmp(exiting->state, "READY") == 0)
+    {
+        Process* prev = exiting->queue_prev;
+        Process* next = exiting->queue_next;
+        if (prev && next) // está el medio
+        {
+            prev->queue_next = next;
+            next->queue_prev = prev;
+        }
+        else if (prev && !next) // esta al final
+        {
+            prev->queue_next = NULL;
+        }
+        else if (!prev && next) // etá al inicio
+        {
+            next->queue_prev = NULL;
+        }
+        // si esta solo no es necesario hacer nada adicional
+        exiting->queue_next = NULL;
+        exiting->queue_prev = NULL;
+        return exiting;
+    }
+    else
+    {
+        return NULL;
+    }
 }
 
 static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
@@ -169,6 +199,7 @@ void actualize_state(Queue* queue)
         if (p->waiting_time == p->waiting_delay)
         {
             p->state = "READY";
+            p->total_time += p->waiting_time;
             p->waiting_time = 0;
         }
         p = p->queue_next;
@@ -186,7 +217,7 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         prev = current->queue_prev;
         if (time == current->initial_time)
         {
-            current->priority = 2; // (Felipe) asumo que siempre van a pasar a queue1
+      
             enqueue(current, queue);
             if (next) 
             {
@@ -200,15 +231,28 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
             {
                 prev->queue_next = next;
             }
+
             else // si no hay prev hay que actualizar first
             {
                 process_list->first = next;
             }
-
         }
         current = next;
     }
 }
+
+
+void check_waiting(Queue* queue)
+{
+    Process* p = queue->first;
+    while (p)
+    {
+        if (strcmp(p->state, "WAITING") == 0)
+        {
+            p->waiting_time++;
+        }
+        p = p->queue_next;
+    }
 
 void write_to_file(const char* file, Queue* queue) {
     FILE* file_pointer = fopen(file, "w");
@@ -238,4 +282,5 @@ void write_to_file(const char* file, Queue* queue) {
     // }
 
     fclose(file_pointer);
+
 }

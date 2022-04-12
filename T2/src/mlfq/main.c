@@ -1,5 +1,6 @@
 #include <stdio.h>	// FILE, fopen, fclose, etc.
 #include <stdlib.h> // malloc, calloc, free, etc
+#include <string.h>
 #include "../process/process.h"
 #include "../queue/queue.h"
 #include "../file_manager/manager.h"
@@ -8,65 +9,43 @@ int main(int argc, char const *argv[])
 {
 	// Cola de procesos:
 	Queue* process_list = calloc(1, sizeof(Queue));
-	*process_list = (Queue){.first = NULL, .last = NULL, .quantum = 0};
+	*process_list = init_queue(0, 0);
 
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
 
-	/*Mostramos el archivo de input en consola*/
-	printf("Nombre archivo: %s\n", file_name);
-	printf("Cantidad de procesos: %d\n", input_file->len);
-	printf("Procesos:\n");
-
 	for (int i = 0; i < input_file->len; ++i)
 	{
 
-		for (int j = 0; j < 7; ++j)
-		{
-			printf("%s ", input_file->lines[i][j]);
-
-		}
 		char*** lines = input_file->lines;
 
 		// save new process to heap
 		Process* initialized = calloc(1, sizeof(Process));
 
 		// assign node attributes
-		*initialized = (Process) {.queue_next = NULL, .queue_prev = NULL, .name = lines[i][0], .pid = atoi(lines[i][1]),
-		 .initial_time = atoi(lines[i][2]), .cycles = atoi(lines[i][3]), .wait = atoi(lines[i][4]),
-		 .waiting_delay = atoi(lines[i][5]), .s = atoi(lines[i][6]), .t = 0, .state = "READY", .waiting_time = 0,
-		 .priority = 2};
+		*initialized = init_process(lines[i][0], atoi(lines[i][1]), atoi(lines[i][2]), atoi(lines[i][3]), atoi(lines[i][4]),
+			atoi(lines[i][5]), atoi(lines[i][6]));
+	
+		enqueue(initialized, process_list);
 		
-		//  if list is empty, assign as first and last
-		if (!process_list->first) {
-			process_list->first = initialized;
-			process_list->last = initialized;
-		} //else append
-		else {
-			process_list->last->queue_next = initialized;
-			initialized->queue_prev = process_list->last;
-			process_list->last = initialized;
-		}
-		
-		printf("\n");
 	}
 
 	int q_factor = atoi(argv[3]);
-	Process* cpu = calloc(1, sizeof(Process*));
+	Process* cpu = NULL;
 	Queue* queue1 = calloc(1, sizeof(Queue));
-	*queue1 = (Queue){.first = NULL, .last = NULL, .quantum = q_factor * 2};
+	*queue1 = init_queue(q_factor, 2);
 	Queue* queue2 = calloc(1, sizeof(Queue));
-	*queue2 = (Queue){.first = NULL, .last = NULL, .quantum = q_factor};
+	*queue2 = init_queue(q_factor, 1);
 	Queue* queue3 = calloc(1, sizeof(Queue));
-	*queue3 = (Queue){.first = NULL, .last = NULL, .quantum = 0};
+	*queue3 = init_queue(q_factor, 0);
 
 	Queue* final_list = calloc(1, sizeof(Queue));
-	*final_list = (Queue){.first = NULL, .last = NULL, .quantum = -1};
+	*final_list = init_queue(0, -1);
 
 	int actual_time = 0;
 	int quantum_time = 0;
-	cpu = 0;
+	
 
 	while (1)
 	{
@@ -79,46 +58,57 @@ int main(int argc, char const *argv[])
 		if (cpu)
 		{
 			int quantum = cpu->priority * q_factor;
-			div_t d = div(cpu->t, cpu->wait);
+			check_s(cpu, actual_time); // ve si se cumple el s mientras el proceso está en running
+			
 			if (cpu->t == cpu->cycles)
 			{
 				// proceso termina
+				cpu->state = "FINISHED";
+				cpu->finish_time = actual_time;
 				enqueue(cpu, final_list); // lo guardamos para el output
-				cpu = 0;
+				cpu = NULL;
 			}
-			else if (d.rem == 0)
+			else if (cpu->t % cpu->wait == 0)
 			{
 				// proceso pasa a WAITING
 				cpu->state = "WAITING";
 				// aumentar su prioridad
 				// enqueue_all: asignar priority
-				if (cpu->priority >= 1) 
+				if (cpu->priority >= 1 || cpu->s_accomplished) 
 				{
 					// vuelve a queue1
+					enqueue(cpu, queue1);
+					cpu->s_accomplished = 0;
 				}
-				else if (cpu->priority = 0)
+				else if (cpu->priority == 0)
 				{
 					// pasa a queue2
+					enqueue(cpu, queue2);
 				}
+				cpu = NULL;
 
 			}
-			else if (quantum_time == quantum) // se acaba el quantum
+			else if (quantum_time == quantum && cpu->priority != 0) // se acaba el quantum
 			{
-				// el if aun no esta bien hecho
 				// mover a la cola correspondiente
-				quantum_time = 0;
-				if (cpu->priority == 2)
+				cpu->state = "READY";
+				cpu->interrupts++;
+				if (cpu->s_accomplished == 1)
+				{
+					enqueue(cpu, queue1);
+					cpu->s_accomplished = 0;
+				}
+				else if (cpu->priority == 2)
 				{
 					// salio de la queue1 y se debe añadir a queue2
+					enqueue(cpu, queue2);
 				}
 				else if (cpu->priority == 1)
 				{
 					// salio de la queue2 y se debe añadir a queue3
+					enqueue(cpu, queue3);
 				}
-				else 
-				{
-					// salio de la queue 3 y debe volver a la queue3
-				}
+				cpu = NULL;
 			}
 		}
 
@@ -132,9 +122,62 @@ int main(int argc, char const *argv[])
 		scan(queue1, queue2, queue3, actual_time);
 
 		// 4. Ingresar proceso a la CPU si corresponde
-		// (cambiar estado a running)
+		if (!cpu) // si la cpu está vacía ingresamos un proceso
+		{
+			int cpu_added = 0;
+			if (queue1->first)
+			{
+				// queue1 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				Process* p = fifo_dequeue(queue1);
+				if (p)
+				{
+					cpu = p;
+					quantum_time = 0;
+					cpu_added = 1;
+					add_to_cpu(cpu, actual_time);
+				}
+			}
+			if (queue2->first && cpu_added == 0)
+			{
+				// queue2 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				Process* p = fifo_dequeue(queue2);
+				if (p)
+				{
+					cpu = p;
+					cpu_added = 1;
+					quantum_time = 0;
+					add_to_cpu(cpu, actual_time);
+				}
+			}
+			if (queue3->first && cpu_added == 0)
+			{
+				// queue3 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				Process* p = sjf_dequeue(queue3);
+				if (p)
+				{
+					cpu = p;
+					cpu_added = 1;
+					quantum_time = 0;
+					add_to_cpu(cpu, actual_time);
+				}
+			}
+			if (cpu_added == 0 && !queue1->first && !queue2->first && !queue3->first && !process_list->first)
+			{
+				// si ninguna de las tres queue tiene procesos, no agregue a la cpu y no quedan en la process list, terminamos
+				break;
+			}
+		}
+		else // sino se ingresa proceso, ya hay uno y se ejecuta normalmente
+		{
+			cpu->t++;
+			quantum_time++;
+		}
+		
+		// aumentar los waiting_time de los procesos en waiting
+		check_waiting(queue1);
+		check_waiting(queue2);
+		check_waiting(queue3);
 
-		// chequear condicion de termino
 		actual_time++;
 	}
 
@@ -143,11 +186,12 @@ int main(int argc, char const *argv[])
 
 	
 
-	destroy_queue(process_list);
-	destroy_queue(queue1);
-	destroy_queue(queue2);
-	destroy_queue(queue3);
-	free(cpu);
+	free(process_list);
+	free(queue1);
+	free(queue2);
+	free(queue3);
+	destroy_queue(final_list);
+	
 	
 	input_file_destroy(input_file);
 
