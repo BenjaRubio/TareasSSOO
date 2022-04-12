@@ -16,14 +16,12 @@ void enqueue(Process* process, Queue* queue) {
         queue->last->queue_next = process;
         queue->last = process;
         process->queue_next = NULL;
-        printf("Agregue proceso id: %i a una lista con mas elementos\n", process->pid);
     }
     else {
         queue->first = process;
         queue->last = process;
         process->queue_prev = NULL;
         process->queue_next = NULL;
-        printf("Agregue proceso id: %i a una lista vacia\n", process->pid);
     }
     
     process->priority = queue->priority;
@@ -77,10 +75,9 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
             return exiting;
             
         }
-        else if (exiting->queue_next)
-        {
-            exiting = exiting->queue_next;
-        }
+        
+        exiting = exiting->queue_next;
+        
     }
     return NULL;
 }
@@ -180,14 +177,23 @@ void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t) {
 }
 
 void destroy_queue(Queue* queue) {
-    if (queue->first) {
-        Process* current = queue->first;
-        Process* aux;
-        while (current) {
-            aux = current;
-            current = current->queue_next;
-            free(aux);
-        }
+    // if (queue->first) {
+    //     Process* current = queue->first;
+    //     Process* aux;
+    //     while (current) {
+    //         aux = current;
+    //         current = current->queue_next;
+    //         free(aux);
+    //     }
+    // }
+    // free(queue);
+    Process* current = queue->first;
+    
+    while (current)
+    {
+        Process* next = current->queue_next;
+        free(current);
+        current = next;
     }
     free(queue);
 }
@@ -215,7 +221,7 @@ void actualize_state(Queue* queue)
         if (p->waiting_time == p->waiting_delay)
         {
             p->state = "READY";
-            p->total_time += p->waiting_time;
+            // p->total_time += p->waiting_time;
             p->waiting_time = 0;
         }
         p = p->queue_next;
@@ -264,16 +270,16 @@ void check_waiting(Queue* queue)
     {
         if (strcmp(p->state, "WAITING") == 0)
         {
-            printf("Aumente waiting_time a proceso de id %i\n", p ->pid);
             p->waiting_time++;
         }
+        p->total_time++; // se le suma al tiempo total ya ue en las colas los procesos olo estna WAITING o READY
         p = p->queue_next;
     }
 }
 
 void write_to_file(const char* file, Queue* queue)
 {
-    FILE* file_pointer = fopen(file, "a");
+    FILE* file_pointer = fopen(file, "w");
 
     if (queue->first) {
         Process* current = queue->first;
@@ -283,18 +289,27 @@ void write_to_file(const char* file, Queue* queue)
             char* string;
             int n_chars;
             // formatear la linea aqui:
-            
             int turnaround = turnaorund_time(current);
             int response = response_time(current);
             int waiting = waiting_time(current);
             n_chars = asprintf(&string, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
                 turnaround, response, waiting);
             fwrite(string, 1, n_chars, file_pointer);
-            // fprintf(file_pointer, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
-            //     turnaround, response, waiting);
-
+            free(string);
             current = following;
         }
     }
     fclose(file_pointer);
+}
+
+int check_finish(Queue* queue1, Queue* queue2, Queue* queue3, Queue* process_list)
+{
+    if (!queue1->first && !queue2->first && !queue3->first && !process_list->first)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }

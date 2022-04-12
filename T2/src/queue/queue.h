@@ -26,3 +26,6 @@ void check_waiting(Queue* queue);
 
 void write_to_file(const char* file, Queue* queue);
 
+
+int check_finish(Queue* queue1, Queue* queue2, Queue* queue3, Queue* process_list);
+
