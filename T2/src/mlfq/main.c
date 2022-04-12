@@ -33,7 +33,7 @@ int main(int argc, char const *argv[])
 	}
 
 	int q_factor = atoi(argv[3]);
-	Process* cpu = malloc(sizeof(Process*));
+	Process* cpu = NULL;
 	Queue* queue1 = calloc(1, sizeof(Queue));
 	*queue1 = init_queue(q_factor, 2);
 	Queue* queue2 = calloc(1, sizeof(Queue));
@@ -58,26 +58,29 @@ int main(int argc, char const *argv[])
 		// 2. Si hay proceso en RUNNING actualizar su estado
 		if (cpu)
 		{	
-			printf("el proceso de id %i esta en la cpu\n", cpu->pid);
+			printf("it %i: el proceso de id %i esta en la cpu\n", actual_time, cpu->pid);
 			int quantum = cpu->priority * q_factor;
 			check_s(cpu, actual_time); // ve si se cumple el s mientras el proceso está en running
 			
 			if (cpu->t == cpu->cycles)
 			{
 				// proceso termina
+				printf("it %i: proceso de id %i termino\n", actual_time, cpu->pid);
 				cpu->state = "FINISHED";
 				cpu->finish_time = actual_time;
 				enqueue(cpu, final_list); // lo guardamos para el output
 				cpu = NULL;
 			}
-			else if (cpu->t % cpu->wait == 0)
+			else if (cpu->t > 0 && (cpu->t % cpu->wait) == 0)
 			{
+				printf("it %i: proceso de id %i paso a waiting\n", actual_time, cpu->pid);
 				// proceso pasa a WAITING
 				cpu->state = "WAITING";
 				// aumentar su prioridad
 				// enqueue_all: asignar priority
 				if (cpu->priority >= 1 || cpu->s_accomplished) 
 				{
+					printf("it %i: proceso de id %i entra a queue1\n", actual_time, cpu->pid);
 					// vuelve a queue1
 					enqueue(cpu, queue1);
 					cpu->s_accomplished = 0;
@@ -85,14 +88,17 @@ int main(int argc, char const *argv[])
 				else if (cpu->priority == 0)
 				{
 					// pasa a queue2
+					printf("it %i: proceso de id %i entra a queue2\n", actual_time, cpu->pid);
 					enqueue(cpu, queue2);
 				}
+				printf("it %i: reiniciar CPU\n", actual_time);
 				cpu = NULL;
 
 			}
 			else if (quantum_time == quantum && cpu->priority != 0) // se acaba el quantum
 			{
 				// mover a la cola correspondiente
+				printf("it %i: proceso de id %i termino su quantum\n", actual_time, cpu->pid);
 				cpu->state = "READY";
 				cpu->interrupts++;
 				if (cpu->s_accomplished == 1)
@@ -118,8 +124,17 @@ int main(int argc, char const *argv[])
 		
 		// 3.1 Si un proceso salio de la cpu (arriba)
 		// 3.2 Procesos que inician
+		if (cpu)
+		{
+			printf("it %i: proceso de id %i en cpu\n", actual_time, cpu->pid);
+		}
+		else
+		{
+			printf("it %i: no hay proceso en la cpu\n", actual_time);
+		}
+		
 		enqueue_all(process_list, queue1, actual_time);
-
+		
 		// 3.3 y 3.4 Envejecimiento 2da cola y 3ra cola:
 		scan(queue1, queue2, queue3, actual_time);
 
@@ -127,9 +142,11 @@ int main(int argc, char const *argv[])
 		if (!cpu) // si la cpu está vacía ingresamos un proceso
 		{
 			int cpu_added = 0;
+			printf("it %i: Intento ingresar un nuevo proceso\n", actual_time);
 			if (queue1->first)
 			{
 				// queue1 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				printf("Hay procesos en la primera cola \n");
 				Process* p = fifo_dequeue(queue1);
 				if (p)
 				{
@@ -137,11 +154,14 @@ int main(int argc, char const *argv[])
 					quantum_time = 0;
 					cpu_added = 1;
 					add_to_cpu(cpu, actual_time);
+					printf("it %i: queue1: proceso de id %i entro a la cpu\n", actual_time, cpu->pid);
 				}
+	
 			}
 			if (queue2->first && cpu_added == 0)
 			{
 				// queue2 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				printf("Hay procesos en la segunda cola \n");
 				Process* p = fifo_dequeue(queue2);
 				if (p)
 				{
@@ -149,11 +169,13 @@ int main(int argc, char const *argv[])
 					cpu_added = 1;
 					quantum_time = 0;
 					add_to_cpu(cpu, actual_time);
+					printf("it %i: queue2: proceso de id %i entro a la cpu\n", actual_time, cpu->pid);
 				}
 			}
 			if (queue3->first && cpu_added == 0)
 			{
 				// queue3 tiene procesos, revisamos si hay uno en ready que pueda entrar
+				printf("Hay procesos en la tercera cola \n");
 				Process* p = sjf_dequeue(queue3);
 				if (p)
 				{
@@ -161,6 +183,7 @@ int main(int argc, char const *argv[])
 					cpu_added = 1;
 					quantum_time = 0;
 					add_to_cpu(cpu, actual_time);
+					printf("it %i: queue3: proceso de id %i entro a la cpu\n", actual_time, cpu->pid);
 				}
 			}
 			if (cpu_added == 0 && !queue1->first && !queue2->first && !queue3->first && !process_list->first)
@@ -183,6 +206,8 @@ int main(int argc, char const *argv[])
 		actual_time++;
 	}
 
+	printf("SALI DEL LOOP");
+
 	write_to_file(output_file, final_list);
 
 
@@ -196,13 +221,5 @@ int main(int argc, char const *argv[])
 	free(queue3);
 	destroy_queue(final_list);
 	
-	
 	input_file_destroy(input_file);
-
-	// free(queue1 -> process);
-	// free(queue1);
-	// free(queue2 -> process);
-	// free(queue2);
-	// free(queue3 -> process);
-	// free(queue3);
 }

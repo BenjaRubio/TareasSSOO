@@ -16,13 +16,16 @@ void enqueue(Process* process, Queue* queue) {
         queue->last->queue_next = process;
         queue->last = process;
         process->queue_next = NULL;
+        printf("Agregue proceso id: %i a una lista con mas elementos\n", process->pid);
     }
     else {
         queue->first = process;
         queue->last = process;
         process->queue_prev = NULL;
         process->queue_next = NULL;
+        printf("Agregue proceso id: %i a una lista vacia\n", process->pid);
     }
+    
     process->priority = queue->priority;
 }
 
@@ -31,15 +34,13 @@ Process* brute_dequeue(Queue* queue) {
     if (exiting->queue_next) { // if more left in queue:
         queue->first = exiting->queue_next;
         queue->first->queue_prev = NULL;
-        exiting->queue_next = NULL;
-        exiting->queue_prev = NULL;
     }
     else { // queue left empty
         queue->first = NULL;
         queue->last = NULL;
-        exiting->queue_next = NULL;
-        exiting->queue_prev = NULL;
     }
+    exiting->queue_next = NULL;
+    exiting->queue_prev = NULL;
     return exiting;
 }
 
@@ -49,20 +50,30 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     {
         if (strcmp(exiting->state, "READY") == 0) // strings iguales
         {
-            if (exiting->queue_next) // if more left in queue
+            Process* prev = exiting->queue_prev;
+            Process* next = exiting->queue_next;
+            if (prev && next) // esta al medio
             {
-                queue->first = exiting->queue_next;
-                queue->first->queue_prev = NULL;
-                exiting->queue_next = NULL;
-                exiting->queue_prev = NULL;
+                prev->queue_next = next;
+                next->queue_prev = prev;
             }
-            else // queue left empty
+            else if (prev && !next) // esta al final
+            {
+                prev->queue_next = NULL;
+                queue->last = prev;
+            }
+            else if (!prev && next) // esta al inicio
+            {
+                next->queue_prev = NULL;
+                queue->first = next;
+            }
+            else // esta solo
             {
                 queue->first = NULL;
                 queue->last = NULL;
-                exiting->queue_next = NULL;
-                exiting->queue_prev = NULL;
             }
+            exiting->queue_next = NULL;
+            exiting->queue_prev = NULL;
             return exiting;
             
         }
@@ -100,12 +111,18 @@ Process* sjf_dequeue(Queue* queue)
         else if (prev && !next) // esta al final
         {
             prev->queue_next = NULL;
+            queue->last = prev;
         }
         else if (!prev && next) // etá al inicio
         {
             next->queue_prev = NULL;
+            queue->first = next;
         }
-        // si esta solo no es necesario hacer nada adicional
+        else // esta solo
+        {
+            queue->first = NULL;
+            queue->last = NULL;
+        }
         exiting->queue_next = NULL;
         exiting->queue_prev = NULL;
         return exiting;
@@ -130,25 +147,22 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
                 Process* next = scanned->queue_next;
                 prev->queue_next = next;
                 next->queue_prev = prev;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
             }
             else if (scanned->queue_next) {// si es el primero
                 scanned = brute_dequeue(queuex);
             }
             else if (scanned->queue_prev) { // si es el ultimo
                 queuex->last = scanned->queue_prev;
-                queuex->last->queue_next = 0;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
+                queuex->last->queue_next = NULL;
             }
             else { // si es el unico
-                queuex->first = 0;
-                queuex->last = 0;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
+                queuex->first = NULL;
+                queuex->last = NULL;
             }
+            scanned->queue_next = NULL;
+            scanned->queue_prev = NULL;
             // ya lo sacamos, toca meterlo en queue1
+            // printf("Enqueue process id: %i\n", scanned->pid);
             enqueue(scanned, queue1);
         }
         scanned = following;
@@ -158,8 +172,10 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
 
 void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t) {
     // scan queue3:
+    // printf("scan queue2\n");
     scan_one(queue1, queue2, current_t);
     // scan queue2:
+    // printf("scan queue3\n");
     scan_one(queue1, queue3, current_t);
 }
 
@@ -217,8 +233,6 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         prev = current->queue_prev;
         if (time == current->initial_time)
         {
-      
-            enqueue(current, queue);
             if (next) 
             {
                 next->queue_prev = prev;
@@ -236,6 +250,7 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
             {
                 process_list->first = next;
             }
+            enqueue(current, queue);
         }
         current = next;
     }
@@ -249,6 +264,7 @@ void check_waiting(Queue* queue)
     {
         if (strcmp(p->state, "WAITING") == 0)
         {
+            printf("Aumente waiting_time a proceso de id %i\n", p ->pid);
             p->waiting_time++;
         }
         p = p->queue_next;

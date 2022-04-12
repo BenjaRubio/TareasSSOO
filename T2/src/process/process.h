@@ -27,6 +27,7 @@ Process init_process(char* name, int pid, int initial_time, int cycles, int wait
 void add_to_cpu(Process* process, int current_time);
 int turnaorund_time(Process* process);
 int response_time(Process* process);
+int waiting_time(Process* process);
 
 
 
