@@ -14,6 +14,7 @@ int main(int argc, char const *argv[])
 	/*Lectura del input*/
 	char *file_name = (char *)argv[1];
 	InputFile *input_file = read_file(file_name);
+	char* output_file = (char *)argv[2];
 
 	for (int i = 0; i < input_file->len; ++i)
 	{
@@ -32,7 +33,7 @@ int main(int argc, char const *argv[])
 	}
 
 	int q_factor = atoi(argv[3]);
-	Process* cpu = NULL;
+	Process* cpu = malloc(sizeof(Process*));
 	Queue* queue1 = calloc(1, sizeof(Queue));
 	*queue1 = init_queue(q_factor, 2);
 	Queue* queue2 = calloc(1, sizeof(Queue));
@@ -56,7 +57,8 @@ int main(int argc, char const *argv[])
 
 		// 2. Si hay proceso en RUNNING actualizar su estado
 		if (cpu)
-		{
+		{	
+			printf("el proceso de id %i esta en la cpu\n", cpu->pid);
 			int quantum = cpu->priority * q_factor;
 			check_s(cpu, actual_time); // ve si se cumple el s mientras el proceso está en running
 			
@@ -180,6 +182,8 @@ int main(int argc, char const *argv[])
 
 		actual_time++;
 	}
+
+	write_to_file(output_file, final_list);
 
 
 

@@ -225,7 +225,7 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
             }
             else // si no hay next hay que actualizar last
             {
-                process_list->last = prev   
+                process_list->last = prev;   
             }
             if (prev)
             {
@@ -253,9 +253,11 @@ void check_waiting(Queue* queue)
         }
         p = p->queue_next;
     }
+}
 
-void write_to_file(const char* file, Queue* queue) {
-    FILE* file_pointer = fopen(file, "w");
+void write_to_file(const char* file, Queue* queue)
+{
+    FILE* file_pointer = fopen(file, "a");
 
     if (queue->first) {
         Process* current = queue->first;
@@ -265,22 +267,18 @@ void write_to_file(const char* file, Queue* queue) {
             char* string;
             int n_chars;
             // formatear la linea aqui:
-            n_chars = asprintf(&string, "%s,%i\n", current->name, current->pid);
             
+            int turnaround = turnaorund_time(current);
+            int response = response_time(current);
+            int waiting = waiting_time(current);
+            n_chars = asprintf(&string, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
+                turnaround, response, waiting);
             fwrite(string, 1, n_chars, file_pointer);
+            // fprintf(file_pointer, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
+            //     turnaround, response, waiting);
 
             current = following;
         }
     }
-
-    // // Ejemplo:
-    // char* string;
-    // int n_chars;
-    // n_chars = asprintf(&string, "Formatting a number: %d\n", 42);
-    // for (int i=0; i < 4; i++){
-    //     fwrite(string, 1, n_chars, file_pointer);
-    // }
-
     fclose(file_pointer);
-
 }
