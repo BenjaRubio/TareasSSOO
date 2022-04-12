@@ -26,15 +26,6 @@ void check_waiting(Queue* queue);
 
 void write_to_file(const char* file, Queue* queue);
 
-// typedef struct queue {
-//     Process* process;
-//     int priority;
-//     int quantum;
-//     int len;
-// } Queue;
 
+int check_finish(Queue* queue1, Queue* queue2, Queue* queue3, Queue* process_list);
 
-// Queue init_queue(int max_len, int priority, int q);
-// void enqueue(Queue* queue, Process process);
-// Process fifo_dequeue(Queue* queue);
-// Process sjf_dequeue(Queue* queue);

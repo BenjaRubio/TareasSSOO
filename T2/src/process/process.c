@@ -25,7 +25,7 @@ Process init_process(char* name, int pid, int initial_time, int cycles,
         .t_cpu = 0,
         .interrupts = 0,
         .finish_time = 0,
-        .first_cpu_time = 0,
+        .first_cpu_time = -1,
         .total_time = 0};
     return process;
 }
@@ -46,7 +46,7 @@ void add_to_cpu(Process* process, int current_time)
 {
     process->state = "RUNNING";
     process->t_cpu++;
-    if (!process->first_cpu_time)
+    if (process->first_cpu_time == -1)
     {
         process->first_cpu_time = current_time;
     }
@@ -64,5 +64,5 @@ int response_time(Process* process)
 
 int waiting_time(Process* process)
 {
-    return process->total_time + process->t; // tiempo total en waiting + tiempo de ejecucion en cpu
+    return process->total_time; // tiempo total en waiting + tiempo de ejecucion en cpu
 }

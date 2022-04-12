@@ -23,6 +23,7 @@ void enqueue(Process* process, Queue* queue) {
         process->queue_prev = NULL;
         process->queue_next = NULL;
     }
+    
     process->priority = queue->priority;
 }
 
@@ -31,15 +32,13 @@ Process* brute_dequeue(Queue* queue) {
     if (exiting->queue_next) { // if more left in queue:
         queue->first = exiting->queue_next;
         queue->first->queue_prev = NULL;
-        exiting->queue_next = NULL;
-        exiting->queue_prev = NULL;
     }
     else { // queue left empty
         queue->first = NULL;
         queue->last = NULL;
-        exiting->queue_next = NULL;
-        exiting->queue_prev = NULL;
     }
+    exiting->queue_next = NULL;
+    exiting->queue_prev = NULL;
     return exiting;
 }
 
@@ -49,27 +48,36 @@ Process* fifo_dequeue(Queue* queue) { // ver que pasas si no retorna nada
     {
         if (strcmp(exiting->state, "READY") == 0) // strings iguales
         {
-            if (exiting->queue_next) // if more left in queue
+            Process* prev = exiting->queue_prev;
+            Process* next = exiting->queue_next;
+            if (prev && next) // esta al medio
             {
-                queue->first = exiting->queue_next;
-                queue->first->queue_prev = NULL;
-                exiting->queue_next = NULL;
-                exiting->queue_prev = NULL;
+                prev->queue_next = next;
+                next->queue_prev = prev;
             }
-            else // queue left empty
+            else if (prev && !next) // esta al final
+            {
+                prev->queue_next = NULL;
+                queue->last = prev;
+            }
+            else if (!prev && next) // esta al inicio
+            {
+                next->queue_prev = NULL;
+                queue->first = next;
+            }
+            else // esta solo
             {
                 queue->first = NULL;
                 queue->last = NULL;
-                exiting->queue_next = NULL;
-                exiting->queue_prev = NULL;
             }
+            exiting->queue_next = NULL;
+            exiting->queue_prev = NULL;
             return exiting;
             
         }
-        else if (exiting->queue_next)
-        {
-            exiting = exiting->queue_next;
-        }
+        
+        exiting = exiting->queue_next;
+        
     }
     return NULL;
 }
@@ -100,12 +108,18 @@ Process* sjf_dequeue(Queue* queue)
         else if (prev && !next) // esta al final
         {
             prev->queue_next = NULL;
+            queue->last = prev;
         }
         else if (!prev && next) // etá al inicio
         {
             next->queue_prev = NULL;
+            queue->first = next;
         }
-        // si esta solo no es necesario hacer nada adicional
+        else // esta solo
+        {
+            queue->first = NULL;
+            queue->last = NULL;
+        }
         exiting->queue_next = NULL;
         exiting->queue_prev = NULL;
         return exiting;
@@ -130,25 +144,22 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
                 Process* next = scanned->queue_next;
                 prev->queue_next = next;
                 next->queue_prev = prev;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
             }
             else if (scanned->queue_next) {// si es el primero
                 scanned = brute_dequeue(queuex);
             }
             else if (scanned->queue_prev) { // si es el ultimo
                 queuex->last = scanned->queue_prev;
-                queuex->last->queue_next = 0;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
+                queuex->last->queue_next = NULL;
             }
             else { // si es el unico
-                queuex->first = 0;
-                queuex->last = 0;
-                scanned->queue_next = 0;
-                scanned->queue_prev = 0;
+                queuex->first = NULL;
+                queuex->last = NULL;
             }
+            scanned->queue_next = NULL;
+            scanned->queue_prev = NULL;
             // ya lo sacamos, toca meterlo en queue1
+            // printf("Enqueue process id: %i\n", scanned->pid);
             enqueue(scanned, queue1);
         }
         scanned = following;
@@ -158,20 +169,31 @@ static void scan_one(Queue* queue1, Queue* queuex, int current_t) {
 
 void scan(Queue* queue1, Queue* queue2, Queue* queue3, int current_t) {
     // scan queue3:
+    // printf("scan queue2\n");
     scan_one(queue1, queue2, current_t);
     // scan queue2:
+    // printf("scan queue3\n");
     scan_one(queue1, queue3, current_t);
 }
 
 void destroy_queue(Queue* queue) {
-    if (queue->first) {
-        Process* current = queue->first;
-        Process* aux;
-        while (current) {
-            aux = current;
-            current = current->queue_next;
-            free(aux);
-        }
+    // if (queue->first) {
+    //     Process* current = queue->first;
+    //     Process* aux;
+    //     while (current) {
+    //         aux = current;
+    //         current = current->queue_next;
+    //         free(aux);
+    //     }
+    // }
+    // free(queue);
+    Process* current = queue->first;
+    
+    while (current)
+    {
+        Process* next = current->queue_next;
+        free(current);
+        current = next;
     }
     free(queue);
 }
@@ -199,7 +221,7 @@ void actualize_state(Queue* queue)
         if (p->waiting_time == p->waiting_delay)
         {
             p->state = "READY";
-            p->total_time += p->waiting_time;
+            // p->total_time += p->waiting_time;
             p->waiting_time = 0;
         }
         p = p->queue_next;
@@ -217,8 +239,6 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
         prev = current->queue_prev;
         if (time == current->initial_time)
         {
-      
-            enqueue(current, queue);
             if (next) 
             {
                 next->queue_prev = prev;
@@ -236,6 +256,7 @@ void enqueue_all(Queue* process_list, Queue* queue, int time)
             {
                 process_list->first = next;
             }
+            enqueue(current, queue);
         }
         current = next;
     }
@@ -251,13 +272,14 @@ void check_waiting(Queue* queue)
         {
             p->waiting_time++;
         }
+        p->total_time++; // se le suma al tiempo total ya ue en las colas los procesos olo estna WAITING o READY
         p = p->queue_next;
     }
 }
 
 void write_to_file(const char* file, Queue* queue)
 {
-    FILE* file_pointer = fopen(file, "a");
+    FILE* file_pointer = fopen(file, "w");
 
     if (queue->first) {
         Process* current = queue->first;
@@ -267,18 +289,27 @@ void write_to_file(const char* file, Queue* queue)
             char* string;
             int n_chars;
             // formatear la linea aqui:
-            
             int turnaround = turnaorund_time(current);
             int response = response_time(current);
             int waiting = waiting_time(current);
             n_chars = asprintf(&string, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
                 turnaround, response, waiting);
             fwrite(string, 1, n_chars, file_pointer);
-            // fprintf(file_pointer, "%s,%d,%d,%d,%d,%d\n", current->name, current->t_cpu, current->interrupts,
-            //     turnaround, response, waiting);
-
+            free(string);
             current = following;
         }
     }
     fclose(file_pointer);
+}
+
+int check_finish(Queue* queue1, Queue* queue2, Queue* queue3, Queue* process_list)
+{
+    if (!queue1->first && !queue2->first && !queue3->first && !process_list->first)
+    {
+        return 1;
+    }
+    else
+    {
+        return 0;
+    }
 }
